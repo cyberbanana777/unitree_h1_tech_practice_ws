@@ -4,4 +4,5 @@ sudo apt install \
     python3-pip
 
 pip install \
-    opencv-contrib-python
+    numpy==1.26.4 \
+    opencv-contrib-python==4.9.0.80
