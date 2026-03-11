@@ -25,6 +25,7 @@ class ArucoDetectorNode(Node):
         self.declare_parameter('output_image_topic', '/aruco/debug_image/compressed')
         self.declare_parameter('output_poses_topic', '/aruco/markers')
         self.declare_parameter('rviz_markers_topic', '/aruco/markers_rviz')
+        self.declare_parameter('output_camera_info_topic', '/aruco/camera_info')
 
         self.enable_debug = self.get_parameter('enable_debug_flow').value
         self.enable_rviz = self.get_parameter('enable_rviz_markers').value
@@ -54,7 +55,7 @@ class ArucoDetectorNode(Node):
             CameraInfo,
             self.get_parameter('camera_info_topic').value,
             self.camera_info_callback,
-            qos_profile=QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+            qos_profile=qos_sensor
         )
 
         # Издатели
@@ -62,7 +63,13 @@ class ArucoDetectorNode(Node):
             self.pub_debug_img = self.create_publisher(
                 CompressedImage,
                 self.get_parameter('output_image_topic').value,
-                10
+                10,
+            )
+            self.pub_camera_info = self.create_publisher(
+                CameraInfo,
+                self.get_parameter('output_camera_info_topic').value,
+                qos_profile=qos_sensor
+                
             )
 
         # Издатель для кастомного сообщения ArucoMarkers
@@ -78,6 +85,7 @@ class ArucoDetectorNode(Node):
                 self.get_parameter('rviz_markers_topic').value,
                 10
             )
+            
 
         self.get_logger().info('Aruco detector node started.')
 
@@ -112,6 +120,7 @@ class ArucoDetectorNode(Node):
         self.camera_matrix = np.array(msg.k).reshape(3, 3)
         self.dist_coeffs = np.array(msg.d)
         self.get_logger().info('Camera calibration received.')
+        self.pub_camera_info.publish(msg)
 
     def image_callback(self, msg: CompressedImage):
         """Основная обработка кадра."""
