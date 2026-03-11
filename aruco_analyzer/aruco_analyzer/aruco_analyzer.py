@@ -16,6 +16,7 @@ class ArucoDetectorNode(Node):
         super().__init__('aruco_detector_node')
 
         # Параметры
+        self.declare_parameter('enable_logging', True)
         self.declare_parameter('enable_debug_flow', False)
         self.declare_parameter('enable_rviz_markers', False)
         self.declare_parameter('aruco_dictionary', 'DICT_6X6_250')
@@ -27,6 +28,7 @@ class ArucoDetectorNode(Node):
         self.declare_parameter('rviz_markers_topic', '/aruco/markers_rviz')
         self.declare_parameter('output_camera_info_topic', '/aruco/camera_info')
 
+        self.enable_logging = self.get_parameter('enable_logging').value 
         self.enable_debug = self.get_parameter('enable_debug_flow').value
         self.enable_rviz = self.get_parameter('enable_rviz_markers').value
         self.marker_size = self.get_parameter('marker_size').value
@@ -86,6 +88,9 @@ class ArucoDetectorNode(Node):
                 10
             )
             
+        if self.enable_logging:
+            self.get_logger().info('Aruco detector node started.')
+            
 
         self.get_logger().info('Aruco detector node started.')
 
@@ -111,16 +116,16 @@ class ArucoDetectorNode(Node):
             'DICT_ARUCO_ORIGINAL': aruco.DICT_ARUCO_ORIGINAL,
         }
         if name not in dictionaries:
-            self.get_logger().warn(f'Unknown dictionary {name}, using DICT_6X6_250')
-            name = 'DICT_6X6_250'
+            self.get_logger().warn(f'Unknown dictionary {name}, using DICT_5X5_250')
+            name = 'DICT_5X5_250'
         return aruco.getPredefinedDictionary(dictionaries[name])
 
     def camera_info_callback(self, msg: CameraInfo):
-        """Сохраняем матрицу камеры и коэффициенты искажения."""
         self.camera_matrix = np.array(msg.k).reshape(3, 3)
         self.dist_coeffs = np.array(msg.d)
-        self.get_logger().info('Camera calibration received.')
-        self.pub_camera_info.publish(msg)
+        
+        if self.enable_debug:
+            self.pub_camera_info.publish(msg)
 
     def image_callback(self, msg: CompressedImage):
         """Основная обработка кадра."""
@@ -139,6 +144,9 @@ class ArucoDetectorNode(Node):
 
         debug_image = cv_image.copy()
         aruco_markers_msg = ArucoMarkers()  # контейнер для кастомных сообщений
+        
+        if self.enable_logging: 
+            debug_msg_cli = []  # массив для отладки через CLI
 
         if ids is not None and len(ids) > 0 and self.camera_matrix is not None:
             # Оценка позы для каждого маркера
@@ -169,6 +177,10 @@ class ArucoDetectorNode(Node):
                 aruco_marker.dictionary = self.dict_name
 
                 aruco_markers_msg.markers.append(aruco_marker)
+                
+                if self.enable_logging:
+                    debug_msg_cli.append(f'{marker_id}; ')
+                
 
                 # Если debug включён, рисуем на изображении
                 if self.enable_debug:
@@ -208,6 +220,9 @@ class ArucoDetectorNode(Node):
             debug_msg.format = 'jpeg'
             debug_msg.data = encoded_img.tobytes()
             self.pub_debug_img.publish(debug_msg)
+            
+        if self.enable_logging and (len(debug_msg_cli) != 0) :
+            self.get_logger().info(''.join(sorted(debug_msg_cli)))
 
     def _create_cube_marker(self, marker_id, frame_id, tvec, q, stamp):
         """Создаёт маркер типа CUBE для отображения метки в RVIZ."""

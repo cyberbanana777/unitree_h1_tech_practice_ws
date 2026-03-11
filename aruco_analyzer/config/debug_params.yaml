@@ -1,11 +1,12 @@
-/aruco_analyzer:  # Имя узла (или namespace/узел)
+/aruco_analyzer:  
   ros__parameters:
+    enable_logging: true
     enable_debug_flow: true
     enable_rviz_markers: true
-    aruco_dictionary: "DICT_5X5 _250"
+    aruco_dictionary: "DICT_5X5_250"
     marker_size: 0.03
-    camera_topic: "/image/compressed"
-    camera_info_topic: "/camera_info"
+    camera_topic: "/camera/image/compressed"
+    camera_info_topic: "/camera/camera_info"
     output_image_topic: "/aruco/image/compressed"
     output_camera_info_topic: '/aruco/camera_info'
     output_poses_topic: "/aruco/markers"
