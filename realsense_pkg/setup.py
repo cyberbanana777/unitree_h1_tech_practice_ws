@@ -1,9 +1,9 @@
 import os
 from glob import glob
 
-from setuptools import find_packages, setup
+from setuptools import setup, find_packages
 
-package_name = 'camera_driver'
+package_name = 'realsense_pkg'
 
 setup(
     name=package_name,
@@ -26,7 +26,7 @@ setup(
     zip_safe=True,
     maintainer='banana-killer',
     maintainer_email='sashagrachev2005@gmail.com',
-    description='Simple camera driver based on python-opencv',
+    description='The pkg includes config files for start camera Intel Realsense D435i',
     license='MIT',
     extras_require={
         'test': [
@@ -35,7 +35,6 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'camera_driver = camera_driver.camera_driver:main'
         ],
     },
 )
